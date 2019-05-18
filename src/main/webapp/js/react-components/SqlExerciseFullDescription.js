@@ -7,10 +7,24 @@ class SqlExerciseFullDescription extends React.Component {
     }
 
     render() {
-        return re('div',{},
+        return re(VContainer,{},
             re('h1',{}, this.props.pageData.exercise.title),
             re('div',{}, this.props.pageData.exercise.description),
-            re('h3',{}, "Example output:")
+            this.renderTestResults(this.state.passed, this.state.expected, this.state.actual)
+        )
+    }
+
+    renderTestResults(passed, expected, actual) {
+        return re(VContainer,{},
+            re('div', {}, passed?"Success":"Fail"),
+            re(HContainer,{},
+                re(VContainer,{},
+                    re('span',{},"Expected:")
+                ),
+                re(VContainer,{},
+                    re('div',{},"Actual:")
+                )
+            )
         )
     }
 
