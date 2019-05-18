@@ -5,9 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -18,4 +15,5 @@ public class ExerciseFullDescriptionDto {
     private String description;
     private ResultSetDto expectedResultSet;
     private String schemaDdl;
+    private String testData;
 }

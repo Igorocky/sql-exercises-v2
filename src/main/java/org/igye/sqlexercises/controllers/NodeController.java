@@ -2,6 +2,7 @@ package org.igye.sqlexercises.controllers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.igye.sqlexercises.newclasses.Exercise;
 import org.igye.sqlexercises.newclasses.ExerciseFullDescriptionDto;
@@ -77,6 +78,9 @@ public class NodeController {
     @ResponseBody
     public ValidateQueryResponse validate(@PathVariable String id,
                            @RequestBody ValidateQueryRequest request) throws IOException, SQLException {
+        if (request.getActualQuery() == null) {
+            return ValidateQueryResponse.builder().passed(false).error("The query was not entered.").build();
+        }
         Exercise exercise = getExercise(id);
         Pair<ResultSetDto, ResultSetDto> resultSets;
         try {
@@ -124,6 +128,7 @@ public class NodeController {
                 .description(fullDescription.getDescription())
                 .expectedResultSet(fullDescription.getExpectedResultSet())
                 .schemaDdl(fullDescription.getSchemaDdl())
+                .testData(StringUtils.join(fullDescription.getTestData(),";\n") + ";")
                 .build();
     }
 
