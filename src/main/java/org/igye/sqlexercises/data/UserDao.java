@@ -7,7 +7,6 @@ import org.igye.sqlexercises.htmlforms.SessionData;
 import org.igye.sqlexercises.model.Role;
 import org.igye.sqlexercises.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +16,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.igye.sqlexercises.common.OutlineUtils.BCRYPT_SALT_ROUNDS;
 import static org.igye.sqlexercises.common.OutlineUtils.hashPwd;
 import static org.igye.sqlexercises.common.OutlineUtils.map;
 
@@ -70,12 +68,7 @@ public class UserDao {
     @Transactional
     public Validation<String, Void> changePassword(String oldPassword, String newPassword) {
         User user = userRepository.findById(sessionData.getCurrentUser().getId()).get();
-        if (BCrypt.checkpw(oldPassword, user.getPassword())) {
-            user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt(BCRYPT_SALT_ROUNDS)));
-            return Validation.success(null);
-        } else {
-            return Validation.fail("Old password doesn't match.");
-        }
+        return Validation.fail("Old password doesn't match.");
     }
 
     @Transactional

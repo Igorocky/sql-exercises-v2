@@ -3,11 +3,9 @@ package org.igye.sqlexercises.htmlforms;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.igye.sqlexercises.config.UserDetailsImpl;
 import org.igye.sqlexercises.data.NodeDao;
 import org.igye.sqlexercises.model.User;
 import org.igye.sqlexercises.selection.Selection;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @NoArgsConstructor
 public class SessionData {
@@ -26,9 +24,6 @@ public class SessionData {
     }
 
     public synchronized User getCurrentUser() {
-        if (user == null) {
-            user = ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
-        }
         return user;
     }
 }

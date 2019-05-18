@@ -2,9 +2,9 @@ package org.igye.sqlexercises.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Session;
-import org.igye.sqlexercises.config.UserDetailsImpl;
 import org.igye.sqlexercises.exceptions.AccessDeniedException;
 import org.igye.sqlexercises.exceptions.OutlineException;
 import org.igye.sqlexercises.htmlforms.CellType;
@@ -13,8 +13,6 @@ import org.igye.sqlexercises.model.Node;
 import org.igye.sqlexercises.model.Paragraph;
 import org.igye.sqlexercises.model.Topic;
 import org.igye.sqlexercises.model.User;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -22,6 +20,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,11 +46,11 @@ public class OutlineUtils {
     }
 
     public static String hashPwd(String pwd) {
-        return BCrypt.hashpw(pwd, BCrypt.gensalt(BCRYPT_SALT_ROUNDS));
+        return "";
     }
 
     public static boolean checkPwd(String pwd, String hashedPwd) {
-        return BCrypt.checkpw(pwd, hashedPwd);
+        return false;
     }
 
     public static String prefix(String prefix, String url) {
@@ -114,11 +113,7 @@ public class OutlineUtils {
     }
 
     public static User getCurrentUser() {
-        User user = ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
         return User.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .roles(user.getRoles())
                 .build()
                 ;
     }
@@ -299,4 +294,12 @@ public class OutlineUtils {
         resp.put(k1, v1);
         return resp;
     }
+
+    public static String readFileToString(String path) throws IOException {
+        return IOUtils.toString(
+                OutlineUtils.class.getClassLoader().getResourceAsStream(path),
+                StandardCharsets.UTF_8
+        );
+    }
+
 }

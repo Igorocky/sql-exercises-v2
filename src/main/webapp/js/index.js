@@ -20,7 +20,8 @@ const {
 } = window['material-ui'];
 
 const pages = {}
-pages["LearnNodes"] = LearnNodes
+pages["SqlExercisesList"] = SqlExercisesList
+pages["SqlExerciseFullDescription"] = SqlExerciseFullDescription
 
 ReactDOM.render(
     re(pages[pageType], {pageData:pageData}),
