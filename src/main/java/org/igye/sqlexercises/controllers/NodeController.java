@@ -3,10 +3,11 @@ package org.igye.sqlexercises.controllers;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.igye.sqlexercises.newclasses.ExampleData;
-import org.igye.sqlexercises.newclasses.ExerciseFullDescription;
+import org.igye.sqlexercises.newclasses.Exercise;
 import org.igye.sqlexercises.newclasses.ExerciseFullDescriptionDto;
 import org.igye.sqlexercises.newclasses.ExerciseShortDescriptionDto;
-import org.igye.sqlexercises.newclasses.Schema;
+import org.igye.sqlexercises.newclasses.QueryExecutor;
+import org.igye.sqlexercises.newclasses.TestDataGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,27 +35,25 @@ public class NodeController {
     public static final String EXERCISES_CONFIG_JSON = EXERCISES_DIR + "/config.json";
 
     @Autowired
-    private List<Schema> schemas;
+    private QueryExecutor queryExecutor;
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    private List<ExerciseFullDescription> exercises;
+    private List<Exercise> exercises;
     private List<ExerciseShortDescriptionDto> exercisesShortDescriptions;
+    @Autowired
+    private List<TestDataGenerator> testDataGenerators;
 
     @PostConstruct
     public void init() throws IOException {
         exercises = loadExercises();
-        exercisesShortDescriptions = exercises.stream()
-                .map(e -> ExerciseShortDescriptionDto.builder().id(e.getId()).title(e.getTitle()).build())
-                .collect(Collectors.toList());
-
-        for (ExerciseFullDescription exercise : exercises) {
-            exercise.setSchema(getSchema(exercise.getSchemaId()));
-        }
+        exercisesShortDescriptions = exercises.stream().map(ex ->
+                ExerciseShortDescriptionDto.builder().id(ex.getId()).title(ex.getTitle()).build()
+        ).collect(Collectors.toList());
     }
 
     @GetMapping("exercises")
-    public String exercises(Model model) throws IOException {
+    public String exercises(Model model) {
         model.addAttribute("pageType", "SqlExercisesList");
         model.addAttribute("pageData", mapF(
                 "exercises", exercisesShortDescriptions
@@ -66,38 +65,45 @@ public class NodeController {
     public String exercise(@PathVariable String id, Model model) throws IOException, SQLException {
         model.addAttribute("pageType", "SqlExerciseFullDescription");
         model.addAttribute("pageData", mapF(
-                "exercise", loadFullDescriptionDto(id)
+                "exercise", getFullDescriptionDto(id)
         ));
         return "index";
     }
 
-    private ExerciseFullDescriptionDto loadFullDescriptionDto(String exerciseId) throws IOException, SQLException {
-        ExerciseFullDescription fullDescription =
+    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws IOException, SQLException {
+        Exercise fullDescription =
                 exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
-        if (fullDescription.getDescription() == null) {
+        if (fullDescription.getExpectedResultSet() == null) {
             String exerciseDir = EXERCISES_DIR + "/" + fullDescription.getId();
             fullDescription.setDescription(readFileToString(exerciseDir + "/description.txt"));
+            fullDescription.setSchemaDdl(readFileToString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
+            fullDescription.setTestData(
+                    testDataGenerators.stream()
+                            .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
+                            .findFirst().get()
+                            .generateTestData()
+            );
             fullDescription.setAnswer(readFileToString(exerciseDir + "/ans.sql"));
-            ExampleData exampleData = fullDescription.getSchema().executeQueryOnExampleData(fullDescription.getAnswer());
-            fullDescription.setExampleOutput(exampleData.getQueryResult());
+            fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
+                    fullDescription.getSchemaId(),
+                    fullDescription.getTestData(),
+                    fullDescription.getAnswer(),
+                    null
+            ).getLeft());
         }
         return ExerciseFullDescriptionDto.builder()
                 .id(fullDescription.getId())
                 .title(fullDescription.getTitle())
                 .description(fullDescription.getDescription())
-                .exampleOutput(fullDescription.getExampleOutput())
+                .expectedResultSet(fullDescription.getExpectedResultSet())
+                .schemaDdl(fullDescription.getSchemaDdl())
                 .build();
     }
 
-    private List<ExerciseFullDescription> loadExercises() throws IOException {
+    private List<Exercise> loadExercises() throws IOException {
         return mapper.readValue(
                 readFileToString(EXERCISES_CONFIG_JSON),
-                new TypeReference<List<ExerciseFullDescription>>(){}
+                new TypeReference<List<Exercise>>(){}
         );
     }
-
-    private Schema getSchema(String schemaId) {
-        return schemas.stream().filter(s->s.getId().equals(schemaId)).findFirst().get();
-    }
-
 }

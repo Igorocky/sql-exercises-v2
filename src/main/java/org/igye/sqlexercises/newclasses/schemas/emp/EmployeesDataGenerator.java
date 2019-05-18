@@ -1,13 +1,13 @@
 package org.igye.sqlexercises.newclasses.schemas.emp;
 
-import org.igye.sqlexercises.newclasses.Schema;
+import org.igye.sqlexercises.newclasses.TestDataGenerator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class EmployeesSchema extends Schema {
+public class EmployeesDataGenerator implements TestDataGenerator {
 
     @Override
     public String getId() {

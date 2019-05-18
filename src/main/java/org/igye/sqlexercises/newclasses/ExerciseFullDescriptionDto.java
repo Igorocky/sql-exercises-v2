@@ -16,5 +16,6 @@ public class ExerciseFullDescriptionDto {
     private String id;
     private String title;
     private String description;
-    private List<Map<String, Object>> exampleOutput;
+    private ResultSetDto expectedResultSet;
+    private String schemaDdl;
 }

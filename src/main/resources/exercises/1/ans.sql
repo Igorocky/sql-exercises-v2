@@ -1,2 +1,3 @@
-select first_name
+select *
 from employee
+order by id
