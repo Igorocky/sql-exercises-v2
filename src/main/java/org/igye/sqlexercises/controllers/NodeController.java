@@ -2,18 +2,24 @@ package org.igye.sqlexercises.controllers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.igye.sqlexercises.newclasses.ExampleData;
+import org.apache.commons.lang3.tuple.Pair;
 import org.igye.sqlexercises.newclasses.Exercise;
 import org.igye.sqlexercises.newclasses.ExerciseFullDescriptionDto;
 import org.igye.sqlexercises.newclasses.ExerciseShortDescriptionDto;
 import org.igye.sqlexercises.newclasses.QueryExecutor;
+import org.igye.sqlexercises.newclasses.ResultSetDto;
 import org.igye.sqlexercises.newclasses.TestDataGenerator;
+import org.igye.sqlexercises.newclasses.ValidateQueryRequest;
+import org.igye.sqlexercises.newclasses.ValidateQueryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -21,11 +27,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.igye.sqlexercises.common.OutlineUtils.createResponse;
-import static org.igye.sqlexercises.common.OutlineUtils.map;
 import static org.igye.sqlexercises.common.OutlineUtils.mapF;
 import static org.igye.sqlexercises.common.OutlineUtils.readFileToString;
-import static org.igye.sqlexercises.common.OutlineUtils.redirect;
 
 @Controller
 @RequestMapping(NodeController.PREFIX)
@@ -70,7 +73,26 @@ public class NodeController {
         return "index";
     }
 
-    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws IOException, SQLException {
+    @PostMapping("exercise/{id}/validate")
+    @ResponseBody
+    public ValidateQueryResponse validate(@PathVariable String id,
+                           @RequestBody ValidateQueryRequest request) throws IOException, SQLException {
+        Exercise exercise = getExercise(id);
+        Pair<ResultSetDto, ResultSetDto> resultSets;
+        try {
+            resultSets = queryExecutor.executeQueriesOnExampleData(
+                    exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), request.getActualQuery()
+            );
+        } catch (Exception ex) {
+            return ValidateQueryResponse.builder().passed(false).error(ex.getMessage()).build();
+        }
+        return ValidateQueryResponse.builder()
+                .actualResultSet(resultSets.getRight())
+                .passed(resultSets.getLeft().equals(resultSets.getRight()))
+                .build();
+    }
+
+    private Exercise getExercise(String exerciseId) throws IOException, SQLException {
         Exercise fullDescription =
                 exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
         if (fullDescription.getExpectedResultSet() == null) {
@@ -91,6 +113,11 @@ public class NodeController {
                     null
             ).getLeft());
         }
+        return fullDescription;
+    }
+
+    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws IOException, SQLException {
+        Exercise fullDescription = getExercise(exerciseId);
         return ExerciseFullDescriptionDto.builder()
                 .id(fullDescription.getId())
                 .title(fullDescription.getTitle())

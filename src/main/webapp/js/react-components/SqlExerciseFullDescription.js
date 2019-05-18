@@ -3,28 +3,37 @@ class SqlExerciseFullDescription extends React.Component {
     constructor(props) {
         super(props)
         this.state = {expectedResultSet: props.pageData.exercise.expectedResultSet}
-        this.renderNodes = this.renderNodes.bind(this)
     }
 
     render() {
         return re(VContainer,{},
             re('h1',{}, this.props.pageData.exercise.title),
             re('div',{}, this.props.pageData.exercise.description),
-            this.renderTestResults(this.state.passed, this.state.expectedResultSet, this.state.actualResultSet)
+            re(TextField,{
+                label:"Your query", multiline:true, margin:"normal", variant:"filled",
+                autoFocus: true, onChange: e => {
+                    const newValue = e.target.value
+                    this.setState((state,props)=>({actualQuery: newValue}))
+                }
+            }),
+            re(Button,{variant:"contained", color:"primary", onClick: ()=>this.validateActualQuery(this)}, "Test"),
+            this.renderTestResults()
         )
     }
 
-    renderTestResults(passed, expectedResultSet, actualResultSet) {
+    renderTestResults() {
         return re(VContainer,{},
-            re('div', {}, passed?"Success":"Fail"),
+            typeof this.state.passed === "undefined"?null:re('div', {}, this.state.passed?"Success":"Fail"),
             re(HContainer,{},
                 re(VContainer,{},
                     re('span',{},"Expected:"),
-                    this.renderResultSet(expectedResultSet)
+                    this.renderResultSet(this.state.expectedResultSet)
                 ),
-                actualResultSet?re(VContainer,{},
+                typeof this.state.passed !== "undefined"?re(VContainer,{},
                     re('div',{},"Actual:"),
-                    this.renderResultSet(actualResultSet)
+                    this.state.error
+                        ?re('div',{},this.state.error)
+                        :this.renderResultSet(this.state.actualResultSet)
                 ):null
             )
         )
@@ -42,7 +51,21 @@ class SqlExerciseFullDescription extends React.Component {
         )
     }
 
-    renderNodes() {
-
+    validateActualQuery(self) {
+        doPost({
+            url: "/exercise/" + this.props.pageData.exercise.id + "/validate",
+            data: {actualQuery:this.state.actualQuery},
+            success: function (response) {
+                if (response.status == "ok") {
+                    self.setState((state,props)=>({
+                        actualResultSet: response.actualResultSet,
+                        passed: response.passed,
+                        error: response.error
+                    }))
+                }
+            }
+        })
     }
+
+
 }
