@@ -1,13 +1,10 @@
 package org.igye.sqlexercises.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.igye.sqlexercises.data.NodeDao;
-import org.igye.sqlexercises.htmlforms.SessionData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.annotation.SessionScope;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
@@ -16,8 +13,6 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 @Configuration
 public class AppConfig implements WebMvcConfigurer {
-    @Autowired
-    private NodeDao nodeDao;
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -45,12 +40,6 @@ public class AppConfig implements WebMvcConfigurer {
         ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
         viewResolver.setTemplateEngine(templateEngine());
         return viewResolver;
-    }
-
-    @Bean
-    @SessionScope
-    public SessionData sessionData() {
-        return new SessionData(nodeDao);
     }
 
     @Bean

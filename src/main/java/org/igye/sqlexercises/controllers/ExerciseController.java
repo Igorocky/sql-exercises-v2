@@ -32,8 +32,8 @@ import static org.igye.sqlexercises.common.OutlineUtils.mapF;
 import static org.igye.sqlexercises.common.OutlineUtils.readFileToString;
 
 @Controller
-@RequestMapping(NodeController.PREFIX)
-public class NodeController {
+@RequestMapping(ExerciseController.PREFIX)
+public class ExerciseController {
     protected static final String PREFIX = "";
     public static final String EXERCISES_DIR = "exercises";
     public static final String EXERCISES_CONFIG_JSON = EXERCISES_DIR + "/config.json";
