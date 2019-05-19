@@ -1,1 +1,1 @@
-Select all data from Employee table. Order by id.
+Select all data from Employee table. Order by id in descending order.

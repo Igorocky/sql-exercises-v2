@@ -16,7 +16,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class OutlineUtils {
+public class ExercisesUtils {
 
     public static <A,B> Set<B> map(Set<A> collection, Function<A,B> mapper) {
         return collection.stream().map(mapper).collect(Collectors.toSet());
@@ -84,9 +84,16 @@ public class OutlineUtils {
         return resp;
     }
 
-    public static String readFileToString(String path) throws IOException {
+    public static String readString(String path) throws IOException {
         return IOUtils.toString(
-                OutlineUtils.class.getClassLoader().getResourceAsStream(path),
+                ExercisesUtils.class.getClassLoader().getResourceAsStream(path),
+                StandardCharsets.UTF_8
+        );
+    }
+
+    public static List<String> readLines(String path) throws IOException {
+        return IOUtils.readLines(
+                ExercisesUtils.class.getClassLoader().getResourceAsStream(path),
                 StandardCharsets.UTF_8
         );
     }

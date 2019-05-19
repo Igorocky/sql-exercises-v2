@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class ValidateQueryResponse {
     @Builder.Default
     private String status = "ok";
+    private ResultSetDto expectedResultSet;
     private ResultSetDto actualResultSet;
     private Boolean passed;
     private String error;

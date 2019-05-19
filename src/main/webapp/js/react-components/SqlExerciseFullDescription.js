@@ -78,6 +78,7 @@ class SqlExerciseFullDescription extends React.Component {
             success: function (response) {
                 if (response.status == "ok") {
                     self.setState((state,props)=>({
+                        expectedResultSet: response.expectedResultSet,
                         actualResultSet: response.actualResultSet,
                         passed: response.passed,
                         error: response.error

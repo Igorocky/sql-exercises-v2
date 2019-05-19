@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class QueryExecutor {
@@ -46,7 +48,19 @@ public class QueryExecutor {
             return null;
         });
         res.setData(jdbcTemplate.queryForList(query));
+        formatData(res.getData());
         return res;
+    }
+
+    private void formatData(List<Map<String, Object>> data) {
+        for (Map<String, Object> row : data) {
+            for (String col : row.keySet()) {
+                Object val = row.get(col);
+                if (val instanceof Date) {
+                    row.put(col,val.toString());
+                }
+            }
+        }
     }
 
     public String getDdlPath(String schemaId) {

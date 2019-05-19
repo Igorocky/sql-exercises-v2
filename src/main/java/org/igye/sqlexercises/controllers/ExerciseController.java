@@ -28,8 +28,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.igye.sqlexercises.common.OutlineUtils.mapF;
-import static org.igye.sqlexercises.common.OutlineUtils.readFileToString;
+import static org.igye.sqlexercises.common.ExercisesUtils.mapF;
+import static org.igye.sqlexercises.common.ExercisesUtils.readString;
 
 @Controller
 @RequestMapping(ExerciseController.PREFIX)
@@ -91,6 +91,7 @@ public class ExerciseController {
             return ValidateQueryResponse.builder().passed(false).error(ex.getMessage()).build();
         }
         return ValidateQueryResponse.builder()
+                .expectedResultSet(resultSets.getLeft())
                 .actualResultSet(resultSets.getRight())
                 .passed(resultSets.getLeft().equals(resultSets.getRight()))
                 .build();
@@ -101,15 +102,15 @@ public class ExerciseController {
                 exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
         if (fullDescription.getExpectedResultSet() == null) {
             String exerciseDir = EXERCISES_DIR + "/" + fullDescription.getId();
-            fullDescription.setDescription(readFileToString(exerciseDir + "/description.txt"));
-            fullDescription.setSchemaDdl(readFileToString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
+            fullDescription.setDescription(readString(exerciseDir + "/description.txt"));
+            fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
             fullDescription.setTestData(
                     testDataGenerators.stream()
                             .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
                             .findFirst().get()
                             .generateTestData()
             );
-            fullDescription.setAnswer(readFileToString(exerciseDir + "/ans.sql"));
+            fullDescription.setAnswer(readString(exerciseDir + "/ans.sql"));
             fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
                     fullDescription.getSchemaId(),
                     fullDescription.getTestData(),
@@ -134,7 +135,7 @@ public class ExerciseController {
 
     private List<Exercise> loadExercises() throws IOException {
         return mapper.readValue(
-                readFileToString(EXERCISES_CONFIG_JSON),
+                readString(EXERCISES_CONFIG_JSON),
                 new TypeReference<List<Exercise>>(){}
         );
     }

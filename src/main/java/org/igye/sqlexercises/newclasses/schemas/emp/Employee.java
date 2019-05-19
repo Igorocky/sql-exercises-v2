@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-import javax.persistence.Entity;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
@@ -14,5 +14,8 @@ public class Employee {
     private Integer id;
     private String firstName;
     private String lastName;
+    private LocalDate dateOfBirth;
+    private LocalDate worksSince;
+    private Integer depId;
     private BigDecimal salary;
 }
