@@ -4,8 +4,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.IOUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -96,6 +101,22 @@ public class ExercisesUtils {
                 ExercisesUtils.class.getClassLoader().getResourceAsStream(path),
                 StandardCharsets.UTF_8
         );
+    }
+
+    public static void backup(String backupDirPath, Connection connection, String h2Version) throws SQLException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+        String time = ZonedDateTime.now().format(formatter);
+        File backupDir = new File(backupDirPath + "/" + time);
+        backupDir.mkdirs();
+        try {
+            connection
+                    .prepareStatement(
+                            "BACKUP TO '" + backupDir.getAbsolutePath() + "/outline-db-" + h2Version + ".zip'"
+                    )
+                    .executeUpdate();
+        } finally {
+            connection.close();
+        }
     }
 
 }

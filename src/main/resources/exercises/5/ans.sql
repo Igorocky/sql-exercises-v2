@@ -1,0 +1,1 @@
+SELECT * FROM EMPLOYEE where dep_id = 3 order by first_NAME, last_NAME, id

@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 @Data
 public class Exercise {
+    private boolean ignore;
     private String id;
     private String title;
     private String description;

@@ -1,1 +1,1 @@
-Find an employee with the highest salary.
+Select all data from Employee table. Order by department in descending order, last name, id.

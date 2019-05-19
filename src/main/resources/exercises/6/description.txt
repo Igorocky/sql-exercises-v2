@@ -1,0 +1,1 @@
+Select all employees who work in the first department and have salary not less than 2000. Order by id.

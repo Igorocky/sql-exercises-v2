@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.igye.sqlexercises.database.HistoryRecord;
 import org.igye.sqlexercises.database.HistoryRecordRepo;
+import org.igye.sqlexercises.exceptions.ExerciseException;
 import org.igye.sqlexercises.newclasses.Exercise;
 import org.igye.sqlexercises.newclasses.ExerciseFullDescriptionDto;
 import org.igye.sqlexercises.newclasses.ExerciseShortDescriptionDto;
@@ -15,6 +16,8 @@ import org.igye.sqlexercises.newclasses.TestDataGenerator;
 import org.igye.sqlexercises.newclasses.ValidateQueryRequest;
 import org.igye.sqlexercises.newclasses.ValidateQueryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,11 +28,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.igye.sqlexercises.common.ExercisesUtils.backup;
 import static org.igye.sqlexercises.common.ExercisesUtils.mapF;
 import static org.igye.sqlexercises.common.ExercisesUtils.readString;
 
@@ -40,10 +47,17 @@ public class ExerciseController {
     public static final String EXERCISES_DIR = "exercises";
     public static final String EXERCISES_CONFIG_JSON = EXERCISES_DIR + "/config.json";
 
+    @Value("${h2.version}")
+    private String h2Version;
+    @Value("${backup.dir}")
+    private String backupDirPath;
+
     @Autowired
     private QueryExecutor queryExecutor;
     @Autowired
     private HistoryRecordRepo historyRecordRepo;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -54,6 +68,11 @@ public class ExerciseController {
     @PostConstruct
     public void init() throws IOException {
         exercises = loadExercises();
+    }
+
+    @PreDestroy
+    public void preDestroy() throws SQLException {
+        backup(backupDirPath, jdbcTemplate.getDataSource().getConnection(), h2Version);
     }
 
     @GetMapping("exercises")
@@ -184,10 +203,21 @@ public class ExerciseController {
     }
 
     private List<Exercise> loadExercises() throws IOException {
-        return mapper.readValue(
+        List<Exercise> exercises = mapper.readValue(
                 readString(EXERCISES_CONFIG_JSON),
-                new TypeReference<List<Exercise>>(){}
+                new TypeReference<List<Exercise>>() {
+                }
         );
+        exercises = exercises.stream().filter(ex -> !ex.isIgnore()).collect(Collectors.toList());
+        Set<String> ids = new HashSet<>();
+        for (Exercise exercise : exercises) {
+            String id = exercise.getId();
+            if (ids.contains(id)) {
+                throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
+            }
+            ids.add(id);
+        }
+        return exercises;
     }
 
     private List<ExerciseShortDescriptionDto> getExercisesShortDescriptions() {

@@ -2,7 +2,7 @@ package org.igye.sqlexercises.controllers;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.igye.sqlexercises.exceptions.OutlineException;
+import org.igye.sqlexercises.exceptions.ExerciseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -55,7 +55,7 @@ public class AssetsController {
         } else if (path.endsWith(".png")) {
             return MediaType.valueOf("image/png");
         } else {
-            throw new OutlineException("Cannot determine MediaType for path '" + path + "'");
+            throw new ExerciseException("Cannot determine MediaType for path '" + path + "'");
         }
     }
 
