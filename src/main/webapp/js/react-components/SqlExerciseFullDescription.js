@@ -23,18 +23,20 @@ class SqlExerciseFullDescription extends React.Component {
                 multiline:true, margin:"normal",
                 value: this.props.pageData.exercise.schemaDdl, disabled: true
             }),
-            re('div',{style:{fontWeight: "bold"}},"Data:"),
-            re(TextField,{style:{width:"1000px", color:"black"},
-                multiline:true, margin:"normal",
-                value: this.props.pageData.exercise.testData, disabled: true
-            })
+            this.state.testData
+                ?[re('div',{style:{fontWeight: "bold"}},"Data:"),
+                    re(TextField,{style:{width:"1000px", color:"black"},
+                        multiline:true, margin:"normal",
+                        value: this.state.testData, disabled: true
+                    })]
+                :re(Button,{variant:"contained", color:"primary", onClick: ()=>this.loadTestData(this)}, "Show data")
         )
     }
 
     renderTestResults() {
         return re(VContainer,{},
             typeof this.state.passed === "undefined"?null:this.renderFailSuccess(),
-            re(HContainer,{},
+            re(HContainer,{tdStyle: {verticalAlign: "top"}},
                 re(VContainer,{},
                     re('span',{style:{fontWeight: "bold"}},"Expected:"),
                     this.renderResultSet(this.state.expectedResultSet)
@@ -84,6 +86,17 @@ class SqlExerciseFullDescription extends React.Component {
                         error: response.error
                     }))
                 }
+            }
+        })
+    }
+
+    loadTestData(self) {
+        doGet({
+            url: "/exercise/" + this.props.pageData.exercise.id + "/testdata",
+            success: function (response) {
+                self.setState((state,props)=>({
+                    testData: response
+                }))
             }
         })
     }

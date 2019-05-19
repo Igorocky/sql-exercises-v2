@@ -32,7 +32,8 @@ public class QueryExecutor {
             jdbcTemplate.execute(insert);
         }
 
-        return Pair.of(executeQuery(expectedQuery), actualQuery!=null?executeQuery(actualQuery):null);
+        ResultSetDto actualResult = actualQuery != null ? executeQuery(actualQuery) : null;
+        return Pair.of(executeQuery(expectedQuery), actualResult);
     }
 
     private ResultSetDto executeQuery(String query) {

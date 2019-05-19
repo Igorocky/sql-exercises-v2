@@ -78,23 +78,45 @@ public class ExerciseController {
     @ResponseBody
     public ValidateQueryResponse validate(@PathVariable String id,
                            @RequestBody ValidateQueryRequest request) throws IOException, SQLException {
-        if (request.getActualQuery() == null) {
-            return ValidateQueryResponse.builder().passed(false).error("The query was not entered.").build();
-        }
         Exercise exercise = getExercise(id);
+        if (request.getActualQuery() == null) {
+            return ValidateQueryResponse.builder()
+                    .passed(false)
+                    .error("The query was not entered.")
+                    .expectedResultSet(
+                            queryExecutor.executeQueriesOnExampleData(
+                                    exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), null
+                            ).getLeft()
+                    )
+                    .build();
+        }
         Pair<ResultSetDto, ResultSetDto> resultSets;
         try {
             resultSets = queryExecutor.executeQueriesOnExampleData(
                     exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), request.getActualQuery()
             );
         } catch (Exception ex) {
-            return ValidateQueryResponse.builder().passed(false).error(ex.getMessage()).build();
+            return ValidateQueryResponse.builder()
+                    .passed(false)
+                    .error(ex.getMessage())
+                    .expectedResultSet(
+                            queryExecutor.executeQueriesOnExampleData(
+                                    exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), null
+                            ).getLeft()
+                    )
+                    .build();
         }
         return ValidateQueryResponse.builder()
                 .expectedResultSet(resultSets.getLeft())
                 .actualResultSet(resultSets.getRight())
                 .passed(resultSets.getLeft().equals(resultSets.getRight()))
                 .build();
+    }
+
+    @GetMapping("exercise/{id}/testdata")
+    @ResponseBody
+    public String getTestData(@PathVariable String id) throws IOException, SQLException {
+        return testDataToString(getExercise(id).getTestData());
     }
 
     private Exercise getExercise(String exerciseId) throws IOException, SQLException {
@@ -129,8 +151,11 @@ public class ExerciseController {
                 .description(fullDescription.getDescription())
                 .expectedResultSet(fullDescription.getExpectedResultSet())
                 .schemaDdl(fullDescription.getSchemaDdl())
-                .testData(StringUtils.join(fullDescription.getTestData(),";\n") + ";")
                 .build();
+    }
+
+    private String testDataToString(List<String> testData) {
+        return StringUtils.join(testData,";\n") + ";";
     }
 
     private List<Exercise> loadExercises() throws IOException {

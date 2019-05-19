@@ -15,5 +15,4 @@ public class ExerciseFullDescriptionDto {
     private String description;
     private ResultSetDto expectedResultSet;
     private String schemaDdl;
-    private String testData;
 }
