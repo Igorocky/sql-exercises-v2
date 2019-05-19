@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.igye.sqlexercises.database.HistoryRecord;
+import org.igye.sqlexercises.database.HistoryRecordRepo;
 import org.igye.sqlexercises.newclasses.Exercise;
 import org.igye.sqlexercises.newclasses.ExerciseFullDescriptionDto;
 import org.igye.sqlexercises.newclasses.ExerciseShortDescriptionDto;
@@ -40,27 +42,25 @@ public class ExerciseController {
 
     @Autowired
     private QueryExecutor queryExecutor;
+    @Autowired
+    private HistoryRecordRepo historyRecordRepo;
 
     private ObjectMapper mapper = new ObjectMapper();
 
     private List<Exercise> exercises;
-    private List<ExerciseShortDescriptionDto> exercisesShortDescriptions;
     @Autowired
     private List<TestDataGenerator> testDataGenerators;
 
     @PostConstruct
     public void init() throws IOException {
         exercises = loadExercises();
-        exercisesShortDescriptions = exercises.stream().map(ex ->
-                ExerciseShortDescriptionDto.builder().id(ex.getId()).title(ex.getTitle()).build()
-        ).collect(Collectors.toList());
     }
 
     @GetMapping("exercises")
     public String exercises(Model model) {
         model.addAttribute("pageType", "SqlExercisesList");
         model.addAttribute("pageData", mapF(
-                "exercises", exercisesShortDescriptions
+                "exercises", getExercisesShortDescriptions()
         ));
         return "index";
     }
@@ -79,8 +79,9 @@ public class ExerciseController {
     public ValidateQueryResponse validate(@PathVariable String id,
                            @RequestBody ValidateQueryRequest request) throws IOException, SQLException {
         Exercise exercise = getExercise(id);
+        ValidateQueryResponse response;
         if (request.getActualQuery() == null) {
-            return ValidateQueryResponse.builder()
+            response = ValidateQueryResponse.builder()
                     .passed(false)
                     .error("The query was not entered.")
                     .expectedResultSet(
@@ -89,28 +90,51 @@ public class ExerciseController {
                             ).getLeft()
                     )
                     .build();
+        } else {
+            Pair<ResultSetDto, ResultSetDto> resultSets;
+            try {
+                resultSets = queryExecutor.executeQueriesOnExampleData(
+                        exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), request.getActualQuery()
+                );
+                response = ValidateQueryResponse.builder()
+                        .expectedResultSet(resultSets.getLeft())
+                        .actualResultSet(resultSets.getRight())
+                        .passed(resultSets.getLeft().equals(resultSets.getRight()))
+                        .build();
+            } catch (Exception ex) {
+                response = ValidateQueryResponse.builder()
+                        .passed(false)
+                        .error(ex.getMessage())
+                        .expectedResultSet(
+                                queryExecutor.executeQueriesOnExampleData(
+                                        exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), null
+                                ).getLeft()
+                        )
+                        .build();
+            }
         }
-        Pair<ResultSetDto, ResultSetDto> resultSets;
-        try {
-            resultSets = queryExecutor.executeQueriesOnExampleData(
-                    exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), request.getActualQuery()
-            );
-        } catch (Exception ex) {
-            return ValidateQueryResponse.builder()
-                    .passed(false)
-                    .error(ex.getMessage())
-                    .expectedResultSet(
-                            queryExecutor.executeQueriesOnExampleData(
-                                    exercise.getSchemaId(), exercise.getTestData(), exercise.getAnswer(), null
-                            ).getLeft()
-                    )
-                    .build();
-        }
-        return ValidateQueryResponse.builder()
-                .expectedResultSet(resultSets.getLeft())
-                .actualResultSet(resultSets.getRight())
-                .passed(resultSets.getLeft().equals(resultSets.getRight()))
-                .build();
+        logResponse(id,request.getActualQuery(),response);
+        return response;
+    }
+
+    @PostMapping("exercise/{id}/reset")
+    @ResponseBody
+    public void reset(@PathVariable String id) {
+        historyRecordRepo.save(HistoryRecord.builder()
+                .exerciseId(id)
+                .reset(true)
+                .build()
+        );
+    }
+
+    private void logResponse(String id, String actualQuery, ValidateQueryResponse response) {
+        historyRecordRepo.save(HistoryRecord.builder()
+                .exerciseId(id)
+                .actualQuery(actualQuery)
+                .passed(response.getPassed())
+                .wasError(response.getError()!=null)
+                .build()
+        );
     }
 
     @GetMapping("exercise/{id}/testdata")
@@ -148,6 +172,7 @@ public class ExerciseController {
         return ExerciseFullDescriptionDto.builder()
                 .id(fullDescription.getId())
                 .title(fullDescription.getTitle())
+                .completed(getCompleted(exerciseId))
                 .description(fullDescription.getDescription())
                 .expectedResultSet(fullDescription.getExpectedResultSet())
                 .schemaDdl(fullDescription.getSchemaDdl())
@@ -163,5 +188,22 @@ public class ExerciseController {
                 readString(EXERCISES_CONFIG_JSON),
                 new TypeReference<List<Exercise>>(){}
         );
+    }
+
+    private List<ExerciseShortDescriptionDto> getExercisesShortDescriptions() {
+        return exercises.stream().map(ex -> ExerciseShortDescriptionDto.builder()
+                .id(ex.getId())
+                .title(ex.getTitle())
+                .completed(getCompleted(ex.getId()))
+                .build()
+        ).collect(Collectors.toList());
+    }
+
+    private Boolean getCompleted(String exerciseId) {
+        return historyRecordRepo.findByExerciseIdOrderByDateTimeDesc(exerciseId).stream()
+                .filter(rec -> rec.isPassed() || rec.isReset())
+                .findFirst()
+        .map(HistoryRecord::isPassed)
+        .orElse(false);
     }
 }

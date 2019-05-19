@@ -2,12 +2,21 @@
 class SqlExerciseFullDescription extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {expectedResultSet: props.pageData.exercise.expectedResultSet}
+        this.state = {
+            expectedResultSet: props.pageData.exercise.expectedResultSet,
+            completed: props.pageData.exercise.completed
+        }
     }
 
     render() {
         return re(VContainer,{},
             re('h1',{}, this.props.pageData.exercise.title),
+            this.state.completed
+                ?re('div',{},
+                    re('span',{style: {color: "#55ea19", fontWeight: "bold", fontSize: "x-large"}},"Completed"),
+                    re(Button,{onClick: ()=>this.resetProgress(this)}, "Reset"),
+                )
+                :null,
             re('div',{}, this.props.pageData.exercise.description),
             re(TextField,{style:{width:"1000px"},
                 label:"Your query", multiline:true, margin:"normal", variant:"filled", autoFocus: true,
@@ -83,9 +92,21 @@ class SqlExerciseFullDescription extends React.Component {
                         expectedResultSet: response.expectedResultSet,
                         actualResultSet: response.actualResultSet,
                         passed: response.passed,
-                        error: response.error
+                        error: response.error,
+                        completed: state.completed || response.passed
                     }))
                 }
+            }
+        })
+    }
+
+    resetProgress(self) {
+        doPost({
+            url: "/exercise/" + this.props.pageData.exercise.id + "/reset",
+            success: function (response) {
+                self.setState((state,props)=>({
+                    completed: false
+                }))
             }
         })
     }

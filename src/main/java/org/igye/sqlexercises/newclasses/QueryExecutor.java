@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,16 +25,18 @@ public class QueryExecutor {
     @Transactional
     public synchronized Pair<ResultSetDto, ResultSetDto> executeQueriesOnExampleData(
             String schemaId, List<String> data, String expectedQuery, String actualQuery) throws IOException, SQLException {
-        ScriptUtils.executeSqlScript(
-                jdbcTemplate.getDataSource().getConnection(),
-                new ClassPathResource(getDdlPath(schemaId))
-        );
-        for (String insert : data) {
-            jdbcTemplate.execute(insert);
-        }
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            ScriptUtils.executeSqlScript(
+                    connection,
+                    new ClassPathResource(getDdlPath(schemaId))
+            );
+            for (String insert : data) {
+                jdbcTemplate.execute(insert);
+            }
 
-        ResultSetDto actualResult = actualQuery != null ? executeQuery(actualQuery) : null;
-        return Pair.of(executeQuery(expectedQuery), actualResult);
+            ResultSetDto actualResult = actualQuery != null ? executeQuery(actualQuery) : null;
+            return Pair.of(executeQuery(expectedQuery), actualResult);
+        }
     }
 
     private ResultSetDto executeQuery(String query) {

@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class ExerciseShortDescriptionDto {
     private String id;
     private String title;
+    private boolean completed;
 }
