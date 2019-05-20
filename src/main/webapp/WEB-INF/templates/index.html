@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="/css/roboto-300-400-500.css" />
     <link rel="stylesheet" href="/css/mui-icons.css">
 
+    <link rel="stylesheet" th:href="'/assets/css/' + ${@environment.getProperty('app.version')} + '/style.css'">
+
     <script th:src="'/assets/js/' + ${@environment.getProperty('app.version')} + '/functions.js'"></script>
     <script th:src="'/assets/js/' + ${@environment.getProperty('app.version')} + '/react-components/layout.js'"></script>
     <script th:src="'/assets/js/' + ${@environment.getProperty('app.version')} + '/react-components/SqlExercisesList.js'"></script>

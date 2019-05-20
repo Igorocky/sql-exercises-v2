@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,19 +40,25 @@ public class QueryExecutor {
         }
     }
 
-    private ResultSetDto executeQuery(String query) {
+    @Transactional
+    public ResultSetDto executeQuery(String query) {
+        return executeQuery(query, new Object[]{});
+    }
+
+    @Transactional
+    public ResultSetDto executeQuery(String query, Object[] params) {
         ResultSetDto res = new ResultSetDto();
         res.setColNames(new ArrayList<>());
-        jdbcTemplate.query(query, (RowMapper<Void>) (resultSet, i) -> {
+        jdbcTemplate.query(query, params, (RowMapper<Void>) (resultSet, i) -> {
             if (res.getColNames().isEmpty()) {
                 int colCnt = resultSet.getMetaData().getColumnCount();
                 for (int c = 1; c <= colCnt; c++) {
-                    res.getColNames().add(resultSet.getMetaData().getColumnName(c));
+                    res.getColNames().add(resultSet.getMetaData().getColumnLabel(c));
                 }
             }
             return null;
         });
-        res.setData(jdbcTemplate.queryForList(query));
+        res.setData(jdbcTemplate.queryForList(query, params));
         formatData(res.getData());
         return res;
     }
@@ -60,7 +67,7 @@ public class QueryExecutor {
         for (Map<String, Object> row : data) {
             for (String col : row.keySet()) {
                 Object val = row.get(col);
-                if (val instanceof Date) {
+                if (val instanceof Date || val instanceof Timestamp) {
                     row.put(col,val.toString());
                 }
             }

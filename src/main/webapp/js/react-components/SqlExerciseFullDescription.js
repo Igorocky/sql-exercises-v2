@@ -18,6 +18,7 @@ class SqlExerciseFullDescription extends React.Component {
                 )
                 :null,
             re('div',{}, this.props.pageData.exercise.description),
+            this.renderHistory(),
             re(TextField,{style:{width:"1000px"},
                 label:"Your query", multiline:true, margin:"normal", variant:"filled", autoFocus: true,
                 onChange: e => {
@@ -28,18 +29,54 @@ class SqlExerciseFullDescription extends React.Component {
             re(Button,{variant:"contained", color:"primary", onClick: ()=>this.validateActualQuery(this)}, "Test"),
             this.renderTestResults(),
             re('div',{style:{fontWeight: "bold"}},"Schema:"),
-            re(TextField,{style:{width:"1000px", color:"black"},
-                multiline:true, margin:"normal",
-                value: this.props.pageData.exercise.schemaDdl, disabled: true
-            }),
+            this.renderDisabledTextAreaWithBlackText({width:"1000px"}, this.props.pageData.exercise.schemaDdl),
             this.state.testData
                 ?[re('div',{style:{fontWeight: "bold"}},"Data:"),
-                    re(TextField,{style:{width:"1000px", color:"black"},
-                        multiline:true, margin:"normal",
-                        value: this.state.testData, disabled: true
-                    })]
+                    this.renderDisabledTextAreaWithBlackText({width:"1000px"}, this.state.testData)]
                 :re(Button,{variant:"contained", color:"primary", onClick: ()=>this.loadTestData(this)}, "Show data")
         )
+    }
+
+    renderDisabledTextAreaWithBlackText(style, text) {
+        return re(TextField,{className: "black-text", style:style, multiline:true, margin:"normal",
+            value: text, disabled: true
+        })
+    }
+
+    renderHistory() {
+        if (!this.props.pageData.exercise.admin) {
+            return null;
+        }
+        return this.state.history
+            ? re(VContainer, {},
+                re('span', {style: {fontWeight: "bold"}}, "History:"),
+                this.renderResultSet(
+                    this.state.history,
+                    (colName,value) => {
+                        if (colName==="ACTUAL_QUERY") {
+                            return this.renderDisabledTextAreaWithBlackText({width:"1000px"},value)
+                        } else if (colName==="P") {
+                            return value
+                                ?re('span', {style: {color: "#55ea19", fontWeight: "bold", fontSize: "x-large"}},
+                                    "\u2713"
+                                ):null
+                        } else if (colName==="E") {
+                            return value
+                                ?re('span', {style: {color: "#ea102a", fontWeight: "bold", fontSize: "x-large"}},
+                                    "\u2717"
+                                ):null
+                        } else if (colName==="R") {
+                            return value
+                                ?re('span', {style: {color: "#55ea19", fontWeight: "bold", fontSize: "x-large"}},
+                                    "\u21BA"
+                                ):null
+                        } else {
+                            return value
+                        }
+                    }
+                )
+            )
+            : re(Button, {onClick: () => this.loadHistory(this)}, "History")
     }
 
     renderTestResults() {
@@ -70,13 +107,13 @@ class SqlExerciseFullDescription extends React.Component {
         }, this.state.passed?"Success":"Fail")
     }
 
-    renderResultSet(resultSet) {
+    renderResultSet(resultSet, formatter) {
         const style = {border: "1px solid lightgrey"}
         return re('table', {style:{...style, borderCollapse: "collapse"}},
             re('tbody', {},
                 re('tr', {}, _.map(resultSet.colNames, colName=>re('td',{style:style},colName))),
                 _.map(resultSet.data, row=>re('tr',{},
-                    _.map(resultSet.colNames, colName=>re('td',{style:style},row[colName]))
+                    _.map(resultSet.colNames, colName=>re('td',{style:style},formatter?formatter(colName,row[colName]):row[colName]))
                 ))
             )
         )
@@ -117,6 +154,17 @@ class SqlExerciseFullDescription extends React.Component {
             success: function (response) {
                 self.setState((state,props)=>({
                     testData: response
+                }))
+            }
+        })
+    }
+
+    loadHistory(self) {
+        doGet({
+            url: "/exercise/" + this.props.pageData.exercise.id + "/history",
+            success: function (response) {
+                self.setState((state,props)=>({
+                    history: response
                 }))
             }
         })

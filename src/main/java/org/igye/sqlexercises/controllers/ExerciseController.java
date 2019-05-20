@@ -51,6 +51,8 @@ public class ExerciseController {
     private String h2Version;
     @Value("${backup.dir}")
     private String backupDirPath;
+    @Value("${app.adminMode}")
+    private boolean adminMode;
 
     @Autowired
     private QueryExecutor queryExecutor;
@@ -162,6 +164,16 @@ public class ExerciseController {
         return testDataToString(getExercise(id).getTestData());
     }
 
+    @GetMapping("exercise/{id}/history")
+    @ResponseBody
+    public ResultSetDto getHistory(@PathVariable String id) throws IOException, SQLException {
+        return queryExecutor.executeQuery(
+                "select DATE_TIME UTC, PASSED as P, WAS_ERROR E, RESET R, ACTUAL_QUERY" +
+                        " from history_record where exercise_id = ? order by date_time",
+                new Object[]{id}
+        );
+    }
+
     private Exercise getExercise(String exerciseId) throws IOException, SQLException {
         Exercise fullDescription =
                 exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
@@ -189,6 +201,7 @@ public class ExerciseController {
     private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws IOException, SQLException {
         Exercise fullDescription = getExercise(exerciseId);
         return ExerciseFullDescriptionDto.builder()
+                .isAdmin(adminMode)
                 .id(fullDescription.getId())
                 .title(fullDescription.getTitle())
                 .completed(getCompleted(exerciseId))

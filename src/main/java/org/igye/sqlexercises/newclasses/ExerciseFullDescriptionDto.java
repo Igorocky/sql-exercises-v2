@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 public class ExerciseFullDescriptionDto {
+    private boolean isAdmin;
     private String id;
     private String title;
     private boolean completed;
