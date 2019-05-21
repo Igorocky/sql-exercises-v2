@@ -87,7 +87,7 @@ public class ExerciseController {
     }
 
     @GetMapping("exercise/{id}")
-    public String exercise(@PathVariable String id, Model model) throws IOException, SQLException {
+    public String exercise(@PathVariable String id, Model model) throws Exception {
         model.addAttribute("pageType", "SqlExerciseFullDescription");
         model.addAttribute("pageData", mapF(
                 "exercise", getFullDescriptionDto(id)
@@ -98,7 +98,7 @@ public class ExerciseController {
     @PostMapping("exercise/{id}/validate")
     @ResponseBody
     public ValidateQueryResponse validate(@PathVariable String id,
-                           @RequestBody ValidateQueryRequest request) throws IOException, SQLException {
+                           @RequestBody ValidateQueryRequest request) throws Exception {
         Exercise exercise = getExercise(id);
         ValidateQueryResponse response;
         if (request.getActualQuery() == null) {
@@ -160,7 +160,7 @@ public class ExerciseController {
 
     @GetMapping("exercise/{id}/testdata")
     @ResponseBody
-    public String getTestData(@PathVariable String id) throws IOException, SQLException {
+    public String getTestData(@PathVariable String id) throws Exception {
         return testDataToString(getExercise(id).getTestData());
     }
 
@@ -174,7 +174,7 @@ public class ExerciseController {
         );
     }
 
-    private Exercise getExercise(String exerciseId) throws IOException, SQLException {
+    private Exercise getExercise(String exerciseId) throws Exception {
         Exercise fullDescription =
                 exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
         if (fullDescription.getExpectedResultSet() == null) {
@@ -198,7 +198,7 @@ public class ExerciseController {
         return fullDescription;
     }
 
-    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws IOException, SQLException {
+    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws Exception {
         Exercise fullDescription = getExercise(exerciseId);
         return ExerciseFullDescriptionDto.builder()
                 .isAdmin(adminMode)

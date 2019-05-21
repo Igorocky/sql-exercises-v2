@@ -1,0 +1,2 @@
+Among all employees of the first and fourth departments, find those whose first name starts with a vowel.
+Order by id.

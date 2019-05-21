@@ -29,22 +29,26 @@ public class EmployeesDataGenerator extends TestDataGenerator {
     }
 
     @Override
-    public List<String> generateTestData() {
-        List<String> res = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            LocalDate dateOfBirth = randomDate(LocalDate.now().minusYears(50), LocalDate.now().minusYears(20));
-            res.add(toInsert(Employee.builder()
-                    .id(nextId())
-                    .firstName(randomElem(firstNames))
-                    .lastName(randomElem(lastNames))
-                    .dateOfBirth(dateOfBirth)
-                    .worksSince(randomDate(dateOfBirth.plusYears(20), LocalDate.now()))
-                    .depId(rnd.nextInt(5)+1)
-                    .salary(BigDecimal.valueOf(randomDouble(1000,5000)))
-                    .build())
-            );
+    public List<String> generateTestData() throws Exception {
+        if (1 == 1) {
+            return readLines("schemas/employees-data.sql");
+        } else {
+            List<String> res = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                LocalDate dateOfBirth = randomDate(LocalDate.now().minusYears(50), LocalDate.now().minusYears(20));
+                res.add(toInsert(Employee.builder()
+                        .id(nextId())
+                        .firstName(randomElem(firstNames))
+                        .lastName(randomElem(lastNames))
+                        .dateOfBirth(dateOfBirth)
+                        .worksSince(randomDate(dateOfBirth.plusYears(20), LocalDate.now()))
+                        .depId(rnd.nextInt(5)+1)
+                        .salary(BigDecimal.valueOf(randomDouble(1000,5000)))
+                        .build())
+                );
+            }
+            return res;
         }
-        return res;
     }
 
     private String toInsert(Employee emp) {

@@ -11,7 +11,7 @@ public abstract class TestDataGenerator {
     protected Random rnd = new Random();
 
     abstract public String getId();
-    abstract public List<String> generateTestData();
+    abstract public List<String> generateTestData() throws Exception;
 
     protected int nextId() {
         return counter++;

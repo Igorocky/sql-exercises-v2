@@ -1,1 +1,0 @@
-Select all employees who started working in a year with even number. Order by id.
