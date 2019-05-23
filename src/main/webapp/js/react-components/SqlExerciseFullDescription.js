@@ -6,6 +6,7 @@ class SqlExerciseFullDescription extends React.Component {
             expectedResultSet: props.pageData.exercise.expectedResultSet,
             completed: props.pageData.exercise.completed
         }
+        this.validateActualQuery = this.validateActualQuery.bind(this)
     }
 
     render() {
@@ -26,7 +27,7 @@ class SqlExerciseFullDescription extends React.Component {
                     this.setState((state,props)=>({actualQuery: newValue}))
                 }
             }),
-            re(Button,{variant:"contained", color:"primary", onClick: ()=>this.validateActualQuery(this)}, "Test"),
+            re(Button,{variant:"contained", color:"primary", onClick: this.validateActualQuery}, "Test"),
             this.renderTestResults(),
             re('div',{style:{fontWeight: "bold"}},"Schema:"),
             this.renderDisabledTextAreaWithBlackText({width:"1000px"}, this.props.pageData.exercise.schemaDdl),
@@ -119,13 +120,13 @@ class SqlExerciseFullDescription extends React.Component {
         )
     }
 
-    validateActualQuery(self) {
+    validateActualQuery() {
         doPost({
             url: "/exercise/" + this.props.pageData.exercise.id + "/validate",
             data: {actualQuery:this.state.actualQuery},
-            success: function (response) {
+            success: response => {
                 if (response.status == "ok") {
-                    self.setState((state,props)=>({
+                    this.setState((state,props)=>({
                         expectedResultSet: response.expectedResultSet,
                         actualResultSet: response.actualResultSet,
                         passed: response.passed,
