@@ -229,8 +229,6 @@ public class ExerciseController {
             Exercise fullDescription =
                     exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
             if (fullDescription.getExpectedResultSet() == null) {
-                String exerciseDir = EXERCISES_DIR + "/" + fullDescription.getId();
-                fullDescription.setDescription(readString(exerciseDir + "/description.txt"));
                 fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
                 fullDescription.setTestData(
                         testDataGenerators.stream()
@@ -238,7 +236,6 @@ public class ExerciseController {
                                 .findFirst().get()
                                 .generateTestData()
                 );
-                fullDescription.setAnswer(readString(exerciseDir + "/ans.sql"));
                 fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
                         fullDescription.getSchemaId(),
                         fullDescription.getTestData(),
