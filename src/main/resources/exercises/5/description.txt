@@ -1,1 +1,0 @@
-Select all employees who work in the third department. Order by first name, last name and id.

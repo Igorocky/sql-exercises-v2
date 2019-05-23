@@ -1,1 +1,0 @@
-SELECT distinct first_NAME FROM EMPLOYEE order by first_NAME

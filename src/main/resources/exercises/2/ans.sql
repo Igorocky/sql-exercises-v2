@@ -1,1 +1,0 @@
-SELECT * FROM EMPLOYEE  order by dep_id desc, last_name, id

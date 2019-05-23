@@ -1,4 +1,0 @@
-Find all employees who's length of last name is less than 5 characters.
-Order by id.
-
-Hint: you can find length of a string with help of 'length' function. For example: length(last_name)

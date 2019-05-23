@@ -1,2 +1,0 @@
-Find all employees who's first name contains 4th letter of English alphabet.
-Order by id.

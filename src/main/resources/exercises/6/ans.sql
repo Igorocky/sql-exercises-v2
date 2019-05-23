@@ -1,1 +1,0 @@
-SELECT * FROM EMPLOYEE where dep_id = 1 and salary >= 2000 order by id

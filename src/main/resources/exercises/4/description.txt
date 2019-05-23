@@ -1,1 +1,0 @@
-Select all distinct names. Order by name.

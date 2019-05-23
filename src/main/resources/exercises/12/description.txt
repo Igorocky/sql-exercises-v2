@@ -1,5 +1,0 @@
-Find all employees who's first name contains small 'i' letter and length of last name is less than 5 characters
-and who started working not earlier than in 2004 year.
-Order by id.
-
-Hint: you can find length of a string with help of 'length' function. For example: length(last_name)

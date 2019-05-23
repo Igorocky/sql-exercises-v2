@@ -1,2 +1,0 @@
-Find all employees who's last name ends with one of the following characters: l,t,y,e.
-Order by id.

@@ -1,1 +1,0 @@
-SELECT * FROM EMPLOYEE where first_name like 'A%' order by id
