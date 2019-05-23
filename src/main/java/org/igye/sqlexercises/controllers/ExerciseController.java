@@ -31,14 +31,13 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.igye.sqlexercises.common.ExercisesUtils.backup;
-import static org.igye.sqlexercises.common.ExercisesUtils.mapF;
-import static org.igye.sqlexercises.common.ExercisesUtils.readString;
+import static org.igye.sqlexercises.common.ExercisesUtils.*;
 
 @Controller
 @RequestMapping(ExerciseController.PREFIX)
@@ -68,8 +67,8 @@ public class ExerciseController {
     private List<TestDataGenerator> testDataGenerators;
 
     @PostConstruct
-    public void init() throws IOException {
-        exercises = loadExercises();
+    public void init() {
+        exercises = loadExercises("exercises/exercises1.sql");
     }
 
     @PreDestroy
@@ -80,10 +79,61 @@ public class ExerciseController {
     @GetMapping("exercises")
     public String exercises(Model model) {
         model.addAttribute("pageType", "SqlExercisesList");
+        List<ExerciseShortDescriptionDto> exercisesShortDescriptions = getExercisesShortDescriptions();
+        exercisesShortDescriptions.stream().map(ex -> {
+            Exercise full = getExercise(ex.getId());
+            return "/*====================================\n"
+                    + "id=" + full.getId() + " schema=" + full.getSchemaId() + " gen=" + full.getDataGeneratorId() + "\n"
+                    + "\n"
+                    + full.getTitle() + "\n"
+                    + "\n"
+                    + full.getDescription() + "\n"
+                    + "*/----------------------------------\n"
+                    + full.getAnswer() + "\n";
+        }).collect(Collectors.toList()).forEach(System.out::println);
         model.addAttribute("pageData", mapF(
-                "exercises", getExercisesShortDescriptions()
+                "exercises", exercisesShortDescriptions
         ));
         return "index";
+    }
+
+    private List<Exercise> loadExercises(String path) {
+        List<Exercise> res = new ArrayList<>();
+        Set<String> ids = new HashSet<>();
+        int state = 1;
+        for (String line : readLines(path)) {
+            Exercise exercise = res.size() > 0 ? res.get(res.size() - 1) : null;
+            if (line.startsWith("/*==========")) {
+                res.add(new Exercise());
+                state = 1;
+            } else if (line.startsWith("*/----------")) {
+                state = 4;
+                exercise.setAnswer("");
+            } else if (state == 1) {
+                String[] parts = line.split("[\\s=]");
+                String id = parts[1];
+                if (ids.contains(id)) {
+                    throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
+                }
+                exercise.setId(id);
+                exercise.setSchemaId(parts[3]);
+                exercise.setDataGeneratorId(parts[5]);
+                state = 2;
+            } else if (state == 2) {
+                if (StringUtils.isNoneBlank(line)) {
+                    exercise.setTitle(line);
+                    exercise.setDescription("");
+                    state = 3;
+                }
+            } else if (state == 3) {
+                if (StringUtils.isNoneBlank(line)) {
+                    exercise.setDescription(exercise.getDescription() + line + "\n");
+                }
+            } else if (state == 4) {
+                exercise.setAnswer(exercise.getAnswer() + line + "\n");
+            }
+        }
+        return res;
     }
 
     @GetMapping("exercise/{id}")
@@ -160,7 +210,7 @@ public class ExerciseController {
 
     @GetMapping("exercise/{id}/testdata")
     @ResponseBody
-    public String getTestData(@PathVariable String id) throws Exception {
+    public String getTestData(@PathVariable String id) {
         return testDataToString(getExercise(id).getTestData());
     }
 
@@ -174,31 +224,35 @@ public class ExerciseController {
         );
     }
 
-    private Exercise getExercise(String exerciseId) throws Exception {
-        Exercise fullDescription =
-                exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
-        if (fullDescription.getExpectedResultSet() == null) {
-            String exerciseDir = EXERCISES_DIR + "/" + fullDescription.getId();
-            fullDescription.setDescription(readString(exerciseDir + "/description.txt"));
-            fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
-            fullDescription.setTestData(
-                    testDataGenerators.stream()
-                            .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
-                            .findFirst().get()
-                            .generateTestData()
-            );
-            fullDescription.setAnswer(readString(exerciseDir + "/ans.sql"));
-            fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
-                    fullDescription.getSchemaId(),
-                    fullDescription.getTestData(),
-                    fullDescription.getAnswer(),
-                    null
-            ).getLeft());
+    private Exercise getExercise(String exerciseId) {
+        try {
+            Exercise fullDescription =
+                    exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
+            if (fullDescription.getExpectedResultSet() == null) {
+                String exerciseDir = EXERCISES_DIR + "/" + fullDescription.getId();
+                fullDescription.setDescription(readString(exerciseDir + "/description.txt"));
+                fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
+                fullDescription.setTestData(
+                        testDataGenerators.stream()
+                                .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
+                                .findFirst().get()
+                                .generateTestData()
+                );
+                fullDescription.setAnswer(readString(exerciseDir + "/ans.sql"));
+                fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
+                        fullDescription.getSchemaId(),
+                        fullDescription.getTestData(),
+                        fullDescription.getAnswer(),
+                        null
+                ).getLeft());
+            }
+            return fullDescription;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return fullDescription;
     }
 
-    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) throws Exception {
+    private ExerciseFullDescriptionDto getFullDescriptionDto(String exerciseId) {
         Exercise fullDescription = getExercise(exerciseId);
         return ExerciseFullDescriptionDto.builder()
                 .isAdmin(adminMode)
@@ -213,24 +267,6 @@ public class ExerciseController {
 
     private String testDataToString(List<String> testData) {
         return StringUtils.join(testData,";\n") + ";";
-    }
-
-    private List<Exercise> loadExercises() throws IOException {
-        List<Exercise> exercises = mapper.readValue(
-                readString(EXERCISES_CONFIG_JSON),
-                new TypeReference<List<Exercise>>() {
-                }
-        );
-        exercises = exercises.stream().filter(ex -> !ex.isIgnore()).collect(Collectors.toList());
-        Set<String> ids = new HashSet<>();
-        for (Exercise exercise : exercises) {
-            String id = exercise.getId();
-            if (ids.contains(id)) {
-                throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
-            }
-            ids.add(id);
-        }
-        return exercises;
     }
 
     private List<ExerciseShortDescriptionDto> getExercisesShortDescriptions() {

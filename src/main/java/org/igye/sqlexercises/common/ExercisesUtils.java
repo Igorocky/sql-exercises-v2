@@ -96,11 +96,15 @@ public class ExercisesUtils {
         );
     }
 
-    public static List<String> readLines(String path) throws IOException {
-        return IOUtils.readLines(
-                ExercisesUtils.class.getClassLoader().getResourceAsStream(path),
-                StandardCharsets.UTF_8
-        );
+    public static List<String> readLines(String path) {
+        try {
+            return IOUtils.readLines(
+                    ExercisesUtils.class.getClassLoader().getResourceAsStream(path),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void backup(String backupDirPath, Connection connection, String h2Version) throws SQLException {
