@@ -68,7 +68,10 @@ public class ExerciseController {
 
     @PostConstruct
     public void init() {
-        exercises = loadExercises("exercises/exercises1.sql");
+        exercises = loadExercises(
+                "exercises/exercises1.sql"
+                ,"exercises/exercises2.sql"
+        );
     }
 
     @PreDestroy
@@ -97,40 +100,42 @@ public class ExerciseController {
         return "index";
     }
 
-    private List<Exercise> loadExercises(String path) {
+    private List<Exercise> loadExercises(String... paths) {
         List<Exercise> res = new ArrayList<>();
         Set<String> ids = new HashSet<>();
         int state = 1;
-        for (String line : readLines(path)) {
-            Exercise exercise = res.size() > 0 ? res.get(res.size() - 1) : null;
-            if (line.startsWith("/*==========")) {
-                res.add(new Exercise());
-                state = 1;
-            } else if (line.startsWith("*/----------")) {
-                state = 4;
-                exercise.setAnswer("");
-            } else if (state == 1) {
-                String[] parts = line.split("[\\s=]");
-                String id = parts[1];
-                if (ids.contains(id)) {
-                    throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
+        for (String path : paths) {
+            for (String line : readLines(path)) {
+                Exercise exercise = res.size() > 0 ? res.get(res.size() - 1) : null;
+                if (line.startsWith("/*==========")) {
+                    res.add(new Exercise());
+                    state = 1;
+                } else if (line.startsWith("*/----------")) {
+                    state = 4;
+                    exercise.setAnswer("");
+                } else if (state == 1) {
+                    String[] parts = line.split("[\\s=]");
+                    String id = parts[1];
+                    if (ids.contains(id)) {
+                        throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
+                    }
+                    exercise.setId(id);
+                    exercise.setSchemaId(parts[3]);
+                    exercise.setDataGeneratorId(parts[5]);
+                    state = 2;
+                } else if (state == 2) {
+                    if (StringUtils.isNoneBlank(line)) {
+                        exercise.setTitle(line);
+                        exercise.setDescription("");
+                        state = 3;
+                    }
+                } else if (state == 3) {
+                    if (StringUtils.isNoneBlank(line)) {
+                        exercise.setDescription(exercise.getDescription() + line + "\n");
+                    }
+                } else if (state == 4) {
+                    exercise.setAnswer(exercise.getAnswer() + line + "\n");
                 }
-                exercise.setId(id);
-                exercise.setSchemaId(parts[3]);
-                exercise.setDataGeneratorId(parts[5]);
-                state = 2;
-            } else if (state == 2) {
-                if (StringUtils.isNoneBlank(line)) {
-                    exercise.setTitle(line);
-                    exercise.setDescription("");
-                    state = 3;
-                }
-            } else if (state == 3) {
-                if (StringUtils.isNoneBlank(line)) {
-                    exercise.setDescription(exercise.getDescription() + line + "\n");
-                }
-            } else if (state == 4) {
-                exercise.setAnswer(exercise.getAnswer() + line + "\n");
             }
         }
         return res;
