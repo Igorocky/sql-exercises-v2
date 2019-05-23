@@ -26,6 +26,17 @@ id=2019-05-23--3 schema=employees gen=employees
 
 Modification of output 3
 
+For each employee, select their id, first name and length of first name. order by id.
+*/----------------------------------
+select id, dep_id, FIRST_NAME, length(FIRST_NAME) LEN
+from employee
+order by id
+
+/*====================================
+id=2019-05-23--4 schema=employees gen=employees
+
+Modification of output 4
+
 For each employee of the first and fourth departments, select their id, first and last names,
 and first name surrounded by '*' symbols. order by id.
 */----------------------------------
