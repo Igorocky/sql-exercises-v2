@@ -71,6 +71,7 @@ public class ExerciseController {
         exercises = loadExercises(
                 "exercises/exercises1.sql"
                 ,"exercises/exercises2.sql"
+                ,"exercises/exercises3.sql"
         );
     }
 
