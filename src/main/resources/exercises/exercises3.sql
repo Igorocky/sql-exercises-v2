@@ -32,3 +32,39 @@ select id, kind, case when kind='rectangle' then width*height when kind='circle'
 from shape
 where 10 > case when kind='rectangle' then width*height when kind='circle' then 3.14*radius*radius end
 order by id
+
+
+/*====================================
+id=2019-05-30--1 schema=shapes gen=shapes-not-null
+
+Query for one kind of data  (2)
+
+Select id and area of each rectangle (area=width*height). order by id.
+*/----------------------------------
+select id, width*height area
+from shape
+where kind = 'rectangle'
+order by id
+
+/*====================================
+id=2019-05-30--2 schema=shapes gen=shapes-not-null
+
+Query for different kind of data (2)
+
+Select id, kind and area of each shape (area_of_rectangle=width*height, area_of_circle=3.14*radius*radius). order by id.
+*/----------------------------------
+select id, kind, case when kind='rectangle' then width*height when kind='circle' then 3.14*radius*radius end area
+from shape
+order by id
+
+/*====================================
+id=2019-05-30--3 schema=shapes gen=shapes-not-null
+
+Query for different kind of data and filter by calculation  (2)
+
+For shapes with area less than 10, select id, kind and area. order by id.
+*/----------------------------------
+select id, kind, case when kind='rectangle' then width*height when kind='circle' then 3.14*radius*radius end area
+from shape
+where 10 > case when kind='rectangle' then width*height when kind='circle' then 3.14*radius*radius end
+order by id

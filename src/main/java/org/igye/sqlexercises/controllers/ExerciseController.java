@@ -72,6 +72,7 @@ public class ExerciseController {
                 "exercises/exercises1.sql"
                 ,"exercises/exercises2.sql"
                 ,"exercises/exercises3.sql"
+//                ,"exercises/exercises4-case-when-emp.sql"
         );
     }
 
