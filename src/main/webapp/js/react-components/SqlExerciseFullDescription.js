@@ -110,9 +110,10 @@ class SqlExerciseFullDescription extends React.Component {
 
     renderResultSet(resultSet, formatter) {
         const style = {border: "1px solid lightgrey"}
+        const headerStyle = {backgroundColor: "rgb(232, 232, 232)"}
         return re('table', {style:{...style, borderCollapse: "collapse"}},
             re('tbody', {},
-                re('tr', {}, _.map(resultSet.colNames, colName=>re('td',{style:style},colName))),
+                re('tr', {}, _.map(resultSet.colNames, colName=>re('td',{style:{...style, ...headerStyle}},colName))),
                 _.map(resultSet.data, row=>re('tr',{},
                     _.map(resultSet.colNames, colName=>re('td',{style:style},formatter?formatter(colName,row[colName]):row[colName]))
                 ))

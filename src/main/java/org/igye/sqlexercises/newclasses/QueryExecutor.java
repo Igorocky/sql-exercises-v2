@@ -27,10 +27,12 @@ public class QueryExecutor {
     public synchronized Pair<ResultSetDto, ResultSetDto> executeQueriesOnExampleData(
             String schemaId, List<String> data, String expectedQuery, String actualQuery) throws IOException, SQLException {
         try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
-            ScriptUtils.executeSqlScript(
-                    connection,
-                    new ClassPathResource(getDdlPath(schemaId))
-            );
+            if (schemaId != null) {
+                ScriptUtils.executeSqlScript(
+                        connection,
+                        new ClassPathResource(getDdlPath(schemaId))
+                );
+            }
             for (String insert : data) {
                 jdbcTemplate.execute(insert);
             }
@@ -67,7 +69,11 @@ public class QueryExecutor {
         for (Map<String, Object> row : data) {
             for (String col : row.keySet()) {
                 Object val = row.get(col);
-                if (val instanceof Date || val instanceof Timestamp) {
+                if (val == null) {
+                    row.put(col,"NULL");
+                } else if (val instanceof Boolean) {
+                    row.put(col,val.toString().toUpperCase());
+                } else if (val instanceof Date || val instanceof Timestamp || val instanceof Boolean) {
                     row.put(col,val.toString());
                 }
             }
