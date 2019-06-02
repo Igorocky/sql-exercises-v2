@@ -4,7 +4,7 @@
 
     <groupId>org.igye</groupId>
     <artifactId>sql-exercises</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <parent>
@@ -19,7 +19,7 @@
 
     <scm>
         <developerConnection>scm:git:file://./.git</developerConnection>
-      <tag>sql-exercises-0.6.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <dependencies>
