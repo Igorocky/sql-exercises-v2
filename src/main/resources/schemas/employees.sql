@@ -6,7 +6,7 @@ create table Employee (
     LAST_NAME VARCHAR (50) NOT NULL,
     DATE_OF_BIRTH DATE,
     WORKS_SINCE DATE,
-    DEP_ID INT NOT NULL,
+    DEP_ID INT,
     SALARY DECIMAL(18,2),
     PRIMARY KEY (ID)
 );

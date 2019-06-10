@@ -32,6 +32,7 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +74,8 @@ public class ExerciseController {
                 ,"exercises/exercises2.sql"
                 ,"exercises/exercises3.sql"
 //                ,"exercises/exercises4-case-when-emp.sql"
+                ,"exercises/exercises5-grouping.sql"
+                , "exercises/exercises6-expressions.sql"
         );
     }
 
@@ -120,6 +123,8 @@ public class ExerciseController {
                     String id = parts[1];
                     if (ids.contains(id)) {
                         throw new ExerciseException("Found duplicated exercise with id '" + id + "'");
+                    } else {
+                        ids.add(id);
                     }
                     exercise.setId(id);
                     exercise.setSchemaId(parts[3]);
@@ -236,13 +241,21 @@ public class ExerciseController {
             Exercise fullDescription =
                     exercises.stream().filter(e -> e.getId().equals(exerciseId)).findFirst().get();
             if (fullDescription.getExpectedResultSet() == null) {
-                fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
-                fullDescription.setTestData(
-                        testDataGenerators.stream()
-                                .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
-                                .findFirst().get()
-                                .generateTestData()
-                );
+                if (!"none".equals(fullDescription.getSchemaId())) {
+                    fullDescription.setSchemaDdl(readString(queryExecutor.getDdlPath(fullDescription.getSchemaId())));
+                } else {
+                    fullDescription.setSchemaId(null);
+                }
+                if (!"none".equals(fullDescription.getDataGeneratorId())) {
+                    fullDescription.setTestData(
+                            testDataGenerators.stream()
+                                    .filter(g->g.getId().equals(fullDescription.getDataGeneratorId()))
+                                    .findFirst().get()
+                                    .generateTestData()
+                    );
+                } else {
+                    fullDescription.setTestData(Collections.emptyList());
+                }
                 fullDescription.setExpectedResultSet(queryExecutor.executeQueriesOnExampleData(
                         fullDescription.getSchemaId(),
                         fullDescription.getTestData(),
